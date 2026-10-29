@@ -58,4 +58,4 @@ For the latter two plots, Group A and Group B are displayed in separate panels u
 
 Labov, W. (1963). The social motivation of a sound change. *Word, 19*(3), 273–309.
 
-Kirby, J., & Sonderegger, M. (2024). [Original simulation materials](https://osf.io/b7sgq/overview).
+Kirby, J., & Sonderegger, M. (2024). Actuation without production bias.
