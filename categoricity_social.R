@@ -13,10 +13,9 @@
 # continuum, approximated by /ɑ/ (low vowel) and /i/ (high vowel).
 # A schwa-like mid vowel lies inside this range and is NOT a preferred endpoint.
 
-
 runSim <- function(nGens = 250, nExamples = 100, nLearners = 1000,
                    bProportion = 0.5, bWeight = 0.5, aWeight = 0.5,
-                   aProb = 0, bProb = 0, k = 25,
+                   aProb = 0, bProb = 0,
                    muA = 730, sigA = 50, muI = 300,
                    teachers = "all", initialDist = "gaussian",
                    distParams = list(pMuStart = 10, pSigStart = 10, pMuOffset = 0),
@@ -32,7 +31,6 @@ runSim <- function(nGens = 250, nExamples = 100, nLearners = 1000,
             muA > muI, sigA > 0,
             teachers == "all", initialDist == "gaussian",
             algorithm == "quadraticPrior", storeIvl >= 1,
-            is.finite(k), k > 0,
             "a" %in% names(algParams),
             is.finite(algParams$a), algParams$a > 0,
             all(c("pMuStart", "pSigStart", "pMuOffset") %in% names(distParams)),
@@ -43,7 +41,7 @@ runSim <- function(nGens = 250, nExamples = 100, nLearners = 1000,
   stopifnot(aSize == as.integer(aSize), bSize == as.integer(bSize),
             aSize >= 2, bSize >= 2)
 
-  # p represents the coarticulation shift in Hz: E[y | p] = muA - p.
+  # p represents the F1-based vowel-raising shift in Hz: E[y | p] = muA - p.
   # p = 0 corresponds to F1 = muA; p = muA - muI corresponds to F1 = muI.
   groupA <- rnorm(aSize, distParams$pMuStart, distParams$pSigStart)
   groupB <- rnorm(bSize, distParams$pMuStart + distParams$pMuOffset,
@@ -66,7 +64,12 @@ runSim <- function(nGens = 250, nExamples = 100, nLearners = 1000,
   densities <- list("0" = get_density(c(groupA, groupB), 0))
   summaries[[1]] <- rbind(summarize(groupA, 0, "A"),
                           summarize(groupB, 0, "B"))
-  storeIts <- unique(c(seq.int(storeIvl, nGens, by = storeIvl), nGens))
+  storeIts <- unique(c(
+    seq.int(from = storeIvl, to = nGens, by = storeIvl)[
+      seq.int(from = storeIvl, to = nGens, by = storeIvl) <= nGens
+    ],
+    nGens
+  ))
 
   # Group-specific exposure and social weights:
   # A learner: P(B source) = bProb, weights A=1-bWeight, B=bWeight.
@@ -87,15 +90,15 @@ runSim <- function(nGens = 250, nExamples = 100, nLearners = 1000,
       weights <- length(y) * wVec / sum(wVec)
       y <- weights * y
 
-      # MAP estimation with a quadratic categoricity prior:
+      # MAP estimation with the original quadratic categoricity prior:
       # log posterior(p) = -sum((y - muA + p)^2)/(2*sigA^2)
-      #                    + k*log(a + (p/(muA-muI) - 0.5)^2).
+      #                    + log(a + (p/(muA-muI) - 0.5)^2).
       # Evaluate on a 1-Hz grid over [0, muA-muI].
       pVec <- seq(0, muA - muI, by = 1)
       sse <- sum((y - muA)^2) +
         2 * pVec * sum(y - muA) + nExamples * pVec^2
       lpVec <- -sse / (2 * sigA^2) +
-        k * log(algParams$a + (pVec / (muA - muI) - 0.5)^2)
+        log(algParams$a + (pVec / (muA - muI) - 0.5)^2)
       pVec[which.max(lpVec)]
     }, numeric(1))
   }
@@ -122,7 +125,7 @@ runSim <- function(nGens = 250, nExamples = 100, nLearners = 1000,
   simParamsDf <- data.frame(nGens, nExamples, nLearners, bProportion,
                             aProb, bProb, aWeight, bWeight,
                             muA, sigA, muI, teachers,
-                            initialDist, algorithm, k, a = algParams$a, storeIvl,
+                            initialDist, algorithm, a = algParams$a, storeIvl,
                             pMuStart = distParams$pMuStart,
                             pSigStart = distParams$pSigStart,
                             pMuOffset = distParams$pMuOffset)
@@ -139,7 +142,6 @@ result <- runSim(
   bProb = 0.2,
   aWeight = 0.7,
   bWeight = 0.3,
-  k = 25,
   # Illustrative /i/ F1 reference (Hz); calibrate to the target dialect/data.
   muI = 300,
   algParams = list(a = 0.01),
@@ -151,9 +153,7 @@ result <- runSim(
   seed = 42
 )
 
-
 source("ksPlots_lsa2015.R")
-
 
 dir.create("plots/categoricity_social", recursive = TRUE, showWarnings = FALSE)
 

@@ -16,7 +16,7 @@ The repository contains three simulation scripts:
 
 ### `production_social.R`
 
-Examines the combined effects of production bias and group-based social weighting without a categoricity prior. Learners estimate the coarticulation parameter from socially weighted observations, while production bias introduces a directional phonetic shift.
+Examines the combined effects of production bias and group-based social weighting without a categoricity prior. Learners estimate the phonetic shift parameter from observations scaled by normalized social weights, while production bias introduces a directional phonetic shift.
 
 ### `social_only.R`
 
@@ -26,7 +26,7 @@ Examines the effects of group-based social weighting alone, without production b
 
 Examines the interaction between group-based social weighting and a quadratic categoricity prior, without production bias.
 
-The two Gaussian distributions represent social groups rather than vowel categories. The categoricity prior favors the endpoints of an F1-based vowel-height continuum, approximated by /ɑ/ (low vowel) and /i/ (high vowel), rather than intermediate schwa-like realizations.
+The two Gaussian distributions represent social groups rather than vowel categories. The quadratic categoricity prior favors parameter values corresponding to the endpoints of an F1-based vowel-height continuum, approximated by /ɑ/ (low vowel) and /i/ (high vowel), rather than intermediate realizations.
 
 **Caveat:** The endpoints of the categoricity prior should not be equated with the preferred realizations of either social group. Social preference is encoded through group-specific weighting, whereas the categoricity prior is defined independently over the phonetic continuum.
 
@@ -40,7 +40,7 @@ Rscript social_only.R
 Rscript categoricity_social.R
 ```
 
-Each simulation generates plots of the coarticulation parameter distribution, mean and standard deviation, and quantile-based spread, saved in a condition-specific subdirectory under `plots/`.
+Each simulation generates plots of the phonetic shift parameter distribution, mean and standard deviation, and quantile-based spread, saved in a condition-specific subdirectory under `plots/`.
 
 ## Plotting Functions
 
@@ -48,8 +48,8 @@ The scripts use `ksPlots_lsa2015.R`, available from the [original OSF repository
 
 The following visualizations are generated:
 
-- `densityPlot()`: Probability density of the coarticulation parameter across generations.
-- `meanSdPlot()`: Mean coarticulation parameter ± 1.96 standard deviations.
+- `densityPlot()`: Probability density of the phonetic shift parameter across generations.
+- `meanSdPlot()`: Mean phonetic shift parameter ± 1.96 standard deviations.
 - `spreadPlot()`: Median and 5th–95th percentile range.
 
 For the latter two plots, Group A and Group B are displayed in separate panels using `facet_wrap(~group)`.
