@@ -30,15 +30,19 @@ The quadratic prior favors the endpoints of an F1-based vowel-height continuum d
 
 ## Model Parameters
 
-Across all three configurations, the phonetic shift parameter \(p\) represents the degree of F1-based vowel raising, with expected F1 given by \(E[y\mid p]=\mu_A-p\).
+Across all three configurations, the phonetic shift parameter $p$ represents the degree of F1-based vowel raising, with expected F1 given by $E[y\mid p]=\mu_A-p$.
 
-The simulations use two social groups with different initial distributions of \(p\). Group A is initialized with a mean shift of 30 Hz and Group B with a mean shift of 10 Hz, both with a standard deviation of 10 Hz.
+The simulations use two social groups with different initial distributions of $p$. Group A is initialized with a mean shift of 30 Hz and Group B with a mean shift of 10 Hz, both with a standard deviation of 10 Hz.
 
 Both groups have a cross-group exposure probability of 0.2. Social weights are configured to favor Group A's speech, with `aWeight = 0.7` and `bWeight = 0.3`. These weights are normalized for each learner before being applied to the phonetic observations.
 
+In the production-bias configuration, `lambda = 10` Hz specifies the mean F1 reduction, with a standard deviation of 5 Hz. Production bias is applied to all observations (`biasProp = 1`).
+
+In the categoricity-prior configuration, `muI = 300` Hz defines the high-vowel F1 reference, yielding a bounded MAP search interval of 0–430 Hz. The quadratic prior uses a shape parameter of `a = 0.01`.
+
 In the two configurations without a categoricity prior, `muCentral = 530` Hz is used solely to define the upper endpoint of the kernel density evaluation interval. It does not constrain the phonetic shift parameter.
 
-In the categoricity-prior configuration, `muI = 300` Hz defines the high-vowel F1 reference, yielding a bounded MAP search interval of 0–430 Hz.
+These values correspond to the preliminary simulation settings. The phonetic and visualization parameters are held fixed, while the social learning, production bias, and categoricity prior parameters may be varied in subsequent runs to further investigate the dynamics of sound change.
 
 ## Running the Simulations
 
