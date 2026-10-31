@@ -8,7 +8,6 @@
 # Centralization is associated with local identity, motivating
 # a social preference for Group A's speech.
 
-
 # The categoricity prior favors the endpoints of an F1-based
 # vowel-height continuum bounded by low- and high-vowel references.
 # No additional preferred value is assigned to the intermediate vowel /e/.
@@ -44,44 +43,34 @@ runSim <- function(nGens = 250, nExamples = 100, nLearners = 1000,
   # p represents the F1-based vowel-raising shift in Hz: E[y | p] = muA - p.
   # p = 0 corresponds to F1 = muA; p = muA - muI corresponds to F1 = muI.
   groupA <- rnorm(aSize, distParams$pMuStart, distParams$pSigStart)
-  groupB <- rnorm(bSize, distParams$pMuStart + distParams$pMuOffset,
-                  distParams$pSigStart)
+  groupB <- rnorm(bSize, distParams$pMuStart + distParams$pMuOffset, distParams$pSigStart)
 
   summarize <- function(p, t, group) {
     data.frame(t = t, group = group, mean = mean(p), sd = sd(p),
-               q05 = unname(quantile(p, 0.05)),
-               q25 = unname(quantile(p, 0.25)),
-               q50 = unname(quantile(p, 0.50)),
-               q75 = unname(quantile(p, 0.75)),
+               q05 = unname(quantile(p, 0.05)), q25 = unname(quantile(p, 0.25)),
+               q50 = unname(quantile(p, 0.50)), q75 = unname(quantile(p, 0.75)),
                q95 = unname(quantile(p, 0.95)))
   }
-  get_density <- function(p, t) {
+
+  get_density <- function(p, t, group) {
     d <- density(p, from = 0, to = muA - muI)
-    data.frame(t = t, p = d$x, probDist = d$y)
+    data.frame(t = t, group = group, p = d$x, probDist = d$y)
   }
 
   summaries <- vector("list", nGens + 1L)
-  densities <- list("0" = get_density(c(groupA, groupB), 0))
-  summaries[[1]] <- rbind(summarize(groupA, 0, "A"),
-                          summarize(groupB, 0, "B"))
-  storeIts <- unique(c(
-    seq.int(from = storeIvl, to = nGens, by = storeIvl)[
-      seq.int(from = storeIvl, to = nGens, by = storeIvl) <= nGens
-    ],
-    nGens
-  ))
+  densities <- list("0" = rbind(get_density(groupA, 0, "A"), get_density(groupB, 0, "B")))
+  summaries[[1]] <- rbind(summarize(groupA, 0, "A"), summarize(groupB, 0, "B"))
+  storeIts <- unique(c(seq.int(storeIvl, nGens, by = storeIvl), nGens))
 
   # Group-specific exposure and social weights:
   # A learner: P(B source) = bProb, weights A=1-bWeight, B=bWeight.
   # B learner: P(A source) = aProb, weights A=aWeight, B=1-aWeight.
-  learn_group <- function(nStudents, ownP, otherP, crossProb,
-                          ownWeight, crossWeight) {
+  learn_group <- function(nStudents, ownP, otherP, crossProb, ownWeight, crossWeight) {
     vapply(seq_len(nStudents), function(j) {
       cross <- rbinom(nExamples, 1, crossProb) == 1L
       nCross <- sum(cross)
       nOwn <- nExamples - nCross
-      examplePs <- c(sample(ownP, nOwn, replace = TRUE),
-                     sample(otherP, nCross, replace = TRUE))
+      examplePs <- c(sample(ownP, nOwn, replace = TRUE), sample(otherP, nCross, replace = TRUE))
       wVec <- c(rep(ownWeight, nOwn), rep(crossWeight, nCross))
       y <- rnorm(nExamples, mean = muA - examplePs, sd = sigA)
 
@@ -95,8 +84,7 @@ runSim <- function(nGens = 250, nExamples = 100, nLearners = 1000,
       #                    + log(a + (p/(muA-muI) - 0.5)^2).
       # Evaluate on a 1-Hz grid over [0, muA-muI].
       pVec <- seq(0, muA - muI, by = 1)
-      sse <- sum((y - muA)^2) +
-        2 * pVec * sum(y - muA) + nExamples * pVec^2
+      sse <- sum((y - muA)^2) + 2 * pVec * sum(y - muA) + nExamples * pVec^2
       lpVec <- -sse / (2 * sigA^2) +
         log(algParams$a + (pVec / (muA - muI) - 0.5)^2)
       pVec[which.max(lpVec)]
@@ -104,14 +92,14 @@ runSim <- function(nGens = 250, nExamples = 100, nLearners = 1000,
   }
 
   for (t in seq_len(nGens)) {
-    nextA <- learn_group(aSize, groupA, groupB, bProb,
-                         1 - bWeight, bWeight)
-    nextB <- learn_group(bSize, groupB, groupA, aProb,
-                         1 - aWeight, aWeight)
-    summaries[[t + 1L]] <- rbind(summarize(nextA, t, "A"),
-                                  summarize(nextB, t, "B"))
-    if (t %in% storeIts)
-      densities[[as.character(t)]] <- get_density(c(nextA, nextB), t)
+    nextA <- learn_group(aSize, groupA, groupB, bProb, 1 - bWeight, bWeight)
+    nextB <- learn_group(bSize, groupB, groupA, aProb, 1 - aWeight, aWeight)
+    summaries[[t + 1L]] <- rbind(summarize(nextA, t, "A"), summarize(nextB, t, "B"))
+
+    if (t %in% storeIts) {
+      densities[[as.character(t)]] <- rbind(
+        get_density(nextA, t, "A"), get_density(nextB, t, "B"))
+    }
     groupA <- nextA
     groupB <- nextB
   }
@@ -120,50 +108,36 @@ runSim <- function(nGens = 250, nExamples = 100, nLearners = 1000,
   rownames(summaryStatsDf) <- NULL
   densityDf <- do.call(rbind, densities)
   rownames(densityDf) <- NULL
-  densityDf$cumDist <- ave(densityDf$probDist, densityDf$t,
-                            FUN = function(x) cumsum(x) / sum(x))
+  densityDf$cumDist <- ave(
+    densityDf$probDist, interaction(densityDf$t, densityDf$group, drop = TRUE),
+    FUN = function(x) cumsum(x) / sum(x))
+
   simParamsDf <- data.frame(nGens, nExamples, nLearners, bProportion,
-                            aProb, bProb, aWeight, bWeight,
-                            muA, sigA, muI, teachers,
-                            initialDist, algorithm, a = algParams$a, storeIvl,
-                            pMuStart = distParams$pMuStart,
+                            aProb, bProb, aWeight, bWeight, muA, sigA, muI,
+                            teachers, initialDist, algorithm, a = algParams$a,
+                            storeIvl, pMuStart = distParams$pMuStart,
                             pSigStart = distParams$pSigStart,
                             pMuOffset = distParams$pMuOffset)
-  list(summaryStatsDf = summaryStatsDf,
-       densityDf = densityDf,
-       simParamsDf = simParamsDf)
+
+  list(summaryStatsDf = summaryStatsDf, densityDf = densityDf, simParamsDf = simParamsDf)
 }
 
 # Run simulation.
 result <- runSim(
-  nGens = 250,
-  nLearners = 1000,
-  aProb = 0.2,
-  bProb = 0.2,
-  aWeight = 0.7,
-  bWeight = 0.3,
+  nGens = 250, nLearners = 1000,
+  aProb = 0.2, bProb = 0.2, aWeight = 0.7, bWeight = 0.3,
   # High-vowel F1 reference defining the upper bound of the shift parameter.
-  muI = 300,
-  algParams = list(a = 0.01),
-  distParams = list(
-    pMuStart = 30,
-    pSigStart = 10,
-    pMuOffset = -20
-  ),
+  muI = 300, algParams = list(a = 0.01),
+  distParams = list(pMuStart = 30, pSigStart = 10, pMuOffset = -20),
   seed = 42
 )
 
-source("ksPlots_lsa2015.R")
-
+source("plots.R")
 dir.create("plots/categoricity_social", recursive = TRUE, showWarnings = FALSE)
 
 ggplot2::ggsave("plots/categoricity_social/density.png",
                 densityPlot(result), width = 9, height = 5)
-
 ggplot2::ggsave("plots/categoricity_social/mean.png",
-                meanSdPlot(result) + ggplot2::facet_wrap(~group),
-                width = 9, height = 4)
-
+                meanSdPlot(result) + ggplot2::facet_wrap(~group), width = 9, height = 4)
 ggplot2::ggsave("plots/categoricity_social/spread.png",
-                spreadPlot(result) + ggplot2::facet_wrap(~group),
-                width = 9, height = 4)
+                spreadPlot(result) + ggplot2::facet_wrap(~group), width = 9, height = 4)

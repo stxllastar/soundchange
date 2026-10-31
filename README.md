@@ -36,7 +36,9 @@ The simulations use two social groups with different initial distributions of \(
 
 Both groups have a cross-group exposure probability of 0.2. Social weights are configured to favor Group A's speech, with `aWeight = 0.7` and `bWeight = 0.3`. These weights are normalized for each learner before being applied to the phonetic observations.
 
-In the two configurations without a categoricity prior, `muCentral = 530` Hz is used solely to define the visualization interval. In the categoricity-prior configuration, `muI = 300` Hz defines the high-vowel F1 reference, yielding a bounded MAP search interval of 0–430 Hz.
+In the two configurations without a categoricity prior, `muCentral = 530` Hz is used solely to define the upper endpoint of the kernel density evaluation interval. It does not constrain the phonetic shift parameter.
+
+In the categoricity-prior configuration, `muI = 300` Hz defines the high-vowel F1 reference, yielding a bounded MAP search interval of 0–430 Hz.
 
 ## Running the Simulations
 
@@ -52,15 +54,13 @@ Each simulation generates plots of the phonetic shift parameter distribution, me
 
 ## Plotting Functions
 
-The scripts use `ksPlots_lsa2015.R`, available from the [original OSF repository](https://osf.io/b7sgq/overview). Download the file and place it in the same directory as the simulation scripts.
+The simulations use `plots.R` to generate the following visualizations:
 
-The following visualizations are generated:
-
-- `densityPlot()`: Probability density of the phonetic shift parameter across generations.
+- `densityPlot()`: Kernel density estimates of the phonetic shift parameter across generations (PDF by default, with CDF available as an option).
 - `meanSdPlot()`: Mean phonetic shift parameter ± 1.96 standard deviations.
 - `spreadPlot()`: Median and 5th–95th percentile range.
 
-For the latter two plots, Group A and Group B are displayed in separate panels using `facet_wrap(~group)`.
+All three plots display Group A and Group B in separate panels using `facet_wrap(~group)`.
 
 ## References
 
