@@ -1,8 +1,8 @@
 # Sound Change Simulations
 
-This repository extends the simulations of Kirby and Sonderegger (2024) to examine how production bias, social weighting, and a categoricity prior influence sound change across generations.
+This repository extends the simulations of Kirby and Sonderegger (2024) to examine how production bias, social weighting, and a categoricity prior influence sound change across generations. The present simulations adapt the original framework to model F1-based diphthong onset raising rather than contextually conditioned coarticulation.
 
-The simulations are motivated by Labov's (1963) Martha's Vineyard study. Group A represents local speakers exhibiting greater centralization, while Group B represents speakers exhibiting less centralization. Social weighting allows learners to assign greater weight to Group A's speech.
+The simulations are motivated by Labov's (1963) Martha's Vineyard study. Group A represents local speakers exhibiting greater centralization, while Group B represents speakers exhibiting less centralization. Centralization is associated with local identity, motivating a social preference for Group A's speech.
 
 ## Simulation Conditions
 
@@ -16,19 +16,27 @@ The repository contains three simulation scripts:
 
 ### `production_social.R`
 
-Examines the combined effects of production bias and group-based social weighting without a categoricity prior. Learners estimate the phonetic shift parameter from observations scaled by normalized social weights, while production bias introduces a directional phonetic shift.
+Examines the combined effects of production bias and group-based social weighting without a categoricity prior. Learners estimate the phonetic shift parameter using the unconstrained naive learning algorithm, with normalized social weights applied to observed F1 values. Production bias introduces an additional directional shift in phonetic production.
 
 ### `social_only.R`
 
-Examines the effects of group-based social weighting alone, without production bias or a categoricity prior.
+Examines the effects of group-based social weighting alone, without production bias or a categoricity prior. Learners use the same unconstrained estimation procedure as in `production_social.R`.
 
 ### `categoricity_social.R`
 
-Examines the interaction between group-based social weighting and a quadratic categoricity prior, without production bias.
+Examines the interaction between group-based social weighting and a quadratic categoricity prior, without production bias. Learners estimate the phonetic shift parameter through bounded maximum a posteriori (MAP) estimation using a 1-Hz grid search.
 
-The two Gaussian distributions represent social groups rather than vowel categories. The quadratic categoricity prior favors parameter values corresponding to the endpoints of an F1-based vowel-height continuum, approximated by /ɑ/ (low vowel) and /i/ (high vowel), rather than intermediate realizations.
+The quadratic prior favors the endpoints of an F1-based vowel-height continuum defined by a canonical low-vowel reference (730 Hz) and a high-vowel reference (300 Hz). These reference values determine the bounds of the shift parameter rather than separately modeled vowel categories. No additional preferred value is assigned to the intermediate vowel /e/.
 
-**Caveat:** The endpoints of the categoricity prior should not be equated with the preferred realizations of either social group. Social preference is encoded through group-specific weighting, whereas the categoricity prior is defined independently over the phonetic continuum.
+## Model Parameters
+
+Across all three configurations, the phonetic shift parameter \(p\) represents the degree of F1-based vowel raising, with expected F1 given by \(E[y\mid p]=\mu_A-p\).
+
+The simulations use two social groups with different initial distributions of \(p\). Group A is initialized with a mean shift of 30 Hz and Group B with a mean shift of 10 Hz, both with a standard deviation of 10 Hz.
+
+Both groups have a cross-group exposure probability of 0.2. Social weights are configured to favor Group A's speech, with `aWeight = 0.7` and `bWeight = 0.3`. These weights are normalized for each learner before being applied to the phonetic observations.
+
+In the two configurations without a categoricity prior, `muCentral = 530` Hz is used solely to define the visualization interval. In the categoricity-prior configuration, `muI = 300` Hz defines the high-vowel F1 reference, yielding a bounded MAP search interval of 0–430 Hz.
 
 ## Running the Simulations
 

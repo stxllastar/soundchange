@@ -38,8 +38,11 @@ runSim <- function(nGens = 250, nExamples = 100, nLearners = 1000,
   stopifnot(aSize == as.integer(aSize), bSize == as.integer(bSize),
             aSize >= 2, bSize >= 2)
 
-  # p represents the coarticulation shift in Hz: E[y | p] = muA - p.
-  # muCentral is a reference (mid-vowel) endpoint, not a separately sampled category.
+  
+  # p represents the degree of F1-based vowel raising in Hz:
+  # E[y | p] = muA - p.
+  # muCentral defines the upper limit of the visualization interval
+  # for p through muA - muCentral.
   groupA <- rnorm(aSize, distParams$pMuStart, distParams$pSigStart)
   groupB <- rnorm(bSize, distParams$pMuStart + distParams$pMuOffset,
                   distParams$pSigStart)
@@ -86,10 +89,9 @@ runSim <- function(nGens = 250, nExamples = 100, nLearners = 1000,
           rnorm(nBiased, algParams$lambda, algParams$lambda / 2)
       }
 
-  
-      # Removing its quadratic prior, the unconstrained MLE is:
-      #   p_hat = muA - mean(weights*y).
-
+    # Following the naive learning algorithm, estimate p using
+    # the unconstrained MLE with normalized social weights:
+    #   p_hat = muA - mean(weights * y).
       if (sum(wVec) <= 0) stop("All sampled social weights are zero")
       weights <- length(y) * wVec / sum(wVec)
       y <- weights * y

@@ -8,10 +8,10 @@
 # Centralization is associated with local identity, motivating
 # a social preference for Group A's speech.
 
-# The two Gaussian distributions represent SOCIAL GROUPS, not vowel categories.
-# The categoricity prior instead favors the two ends of an F1-based vowel-height
-# continuum, approximated by /ɑ/ (low vowel) and /i/ (high vowel).
-# A schwa-like mid vowel lies inside this range and is NOT a preferred endpoint.
+
+# The categoricity prior favors the endpoints of an F1-based
+# vowel-height continuum bounded by low- and high-vowel references.
+# No additional preferred value is assigned to the intermediate vowel /e/.
 
 runSim <- function(nGens = 250, nExamples = 100, nLearners = 1000,
                    bProportion = 0.5, bWeight = 0.5, aWeight = 0.5,
@@ -142,7 +142,7 @@ result <- runSim(
   bProb = 0.2,
   aWeight = 0.7,
   bWeight = 0.3,
-  # Illustrative /i/ F1 reference (Hz); calibrate to the target dialect/data.
+  # High-vowel F1 reference defining the upper bound of the shift parameter.
   muI = 300,
   algParams = list(a = 0.01),
   distParams = list(
